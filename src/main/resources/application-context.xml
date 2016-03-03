@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd">
+
+	<context:component-scan base-package="com.sandbox.aws"></context:component-scan>
+
+	<bean id="CredentialsProviderBean" class="com.amazonaws.auth.DefaultAWSCredentialsProviderChain" />
+
+	<bean id="ClientConfiguration" class="com.amazonaws.ClientConfiguration">
+		<property name="proxyHost" value="your.local.proxy" />						<!-- CHANGEME - These should match your corporate network settings -->
+		<property name="proxyPort" value="80" />
+		<property name="proxyUsername" value="username" />
+		<property name="proxyPassword" value="password" />
+		<property name="maxConnections" value="5" />
+	</bean>
+
+	<bean id="ConnectionFactoryBuilder"
+		class="com.amazon.sqs.javamessaging.SQSConnectionFactory$Builder">
+		<property name="regionName" value="ap-southeast-2"/>						<!-- CHANGEME - Make sure this matches to your queue's region -->
+		<property name="numberOfMessagesToPrefetch" value="5" />
+		<property name="awsCredentialsProvider" ref="CredentialsProviderBean" />
+		<!-- <property name="clientConfiguration" ref="ClientConfiguration"/> -->	<!-- CHANGEME - Remove comment if behind a corporate proxy in your office -->
+	</bean>
+
+	<bean id="ConnectionFactory" class="com.amazon.sqs.javamessaging.SQSConnectionFactory"
+		factory-bean="ConnectionFactoryBuilder"
+		factory-method="build" />
+
+	<bean id="queueName" class="java.lang.String">
+		<constructor-arg value="dev02_mail_notification_queue" />					<!-- CHANGEME - Make sure queue with this name exists with proper rights -->
+	</bean>
+
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="ConnectionFactory" />
+		<property name="defaultDestinationName" ref="queueName" />
+	</bean>
+
+</beans>
